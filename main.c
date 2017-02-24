@@ -29,6 +29,7 @@ static double diff_in_second(struct timespec t1, struct timespec t2)
 
 int main(int argc, char *argv[])
 {
+
     FILE *fp;
     int i = 0;
     char line[MAX_LAST_NAME_SIZE];
@@ -94,6 +95,5 @@ int main(int argc, char *argv[])
 
     if (pHead->pNext) free(pHead->pNext);
     free(pHead);
-
     return 0;
 }
