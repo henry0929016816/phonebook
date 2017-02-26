@@ -8,6 +8,8 @@
 
 #ifdef OPT
 #define OUT_FILE "opt.txt"
+#elif defined(HASH)
+#define OUT_FILE "hash.txt"
 #else
 #define OUT_FILE "orig.txt"
 #endif
@@ -44,22 +46,42 @@ int main(int argc, char *argv[])
     }
 
     /* build the entry */
+#if defined(HASH)
+    /*create hash table*/
+    entry **doorplate;
+    doorplate=malloc( PRIME_NUMBER*sizeof(entry*) );
+    for(i=0; i<PRIME_NUMBER; i++) {
+        doorplate[i]=malloc(sizeof(entry));
+        doorplate[i]->pNext=NULL;
+    }
+
+#endif
+#if defined(HASH)
+    entry *pHead=NULL;
+#else
     entry *pHead, *e;
     pHead = (entry *) malloc(sizeof(entry));
     printf("size of entry : %lu bytes\n", sizeof(entry));
     e = pHead;
     e->pNext = NULL;
+#endif
 
 #if defined(__GNUC__)
     __builtin___clear_cache((char *) pHead, (char *) pHead + sizeof(entry));
 #endif
+
+    i=0;
     clock_gettime(CLOCK_REALTIME, &start);
     while (fgets(line, sizeof(line), fp)) {
         while (line[i] != '\0')
             i++;
         line[i - 1] = '\0';
         i = 0;
+#if defined(HASH)
+        append(line,doorplate);
+#else
         e = append(line, e);
+#endif
     }
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time1 = diff_in_second(start, end);
@@ -67,22 +89,32 @@ int main(int argc, char *argv[])
     /* close file as soon as possible */
     fclose(fp);
 
-    e = pHead;
+//    e = pHead;
 
     /* the givn last name to find */
     char input[MAX_LAST_NAME_SIZE] = "zyxel";
+#if defined(HASH)
+#else
     e = pHead;
-
+#endif
+#if defined(HASH)
+#else
     assert(findName(input, e) &&
            "Did you implement findName() in " IMPL "?");
     assert(0 == strcmp(findName(input, e)->lastName, "zyxel"));
+#endif
 
 #if defined(__GNUC__)
     __builtin___clear_cache((char *) pHead, (char *) pHead + sizeof(entry));
 #endif
     /* compute the execution time */
     clock_gettime(CLOCK_REALTIME, &start);
+#if defined(HASH)
+    findName(input,doorplate);
+
+#else
     findName(input, e);
+#endif
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time2 = diff_in_second(start, end);
 
@@ -92,8 +124,17 @@ int main(int argc, char *argv[])
 
     printf("execution time of append() : %lf sec\n", cpu_time1);
     printf("execution time of findName() : %lf sec\n", cpu_time2);
+#if defined(HASH)
+    /* for(i=0;i<PRIME_NUMBER;i++)
+     {
+         freeList(doorplate[i]->pNext);
+     }*/
+    free(doorplate);
 
+
+#else
     if (pHead->pNext) free(pHead->pNext);
     free(pHead);
+#endif
     return 0;
 }
